@@ -43,6 +43,40 @@ export default function App() {
         console.warn(`Error in loading fonts: ${error}`);
       }
     }
+
+    // Inject visible Fire TV styled scrollbars on web
+    if (typeof document !== 'undefined') {
+      const styleId = 'fire-tv-custom-scrollbars';
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+          /* Ensure scrollbars are always visible on every page */
+          html, body, #root, [data-testid="root"], div {
+            scrollbar-width: thin !important;
+            scrollbar-color: #FF9900 rgba(15, 23, 42, 0.8) !important;
+          }
+          ::-webkit-scrollbar {
+            width: 10px !important;
+            height: 10px !important;
+            display: block !important;
+          }
+          ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.85) !important;
+            border-radius: 6px !important;
+          }
+          ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #FF9900, #F97316) !important;
+            border-radius: 6px !important;
+            border: 2px solid rgba(15, 23, 42, 0.8) !important;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+            background: #22D3EE !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
   }, [loaded, error]);
 
   return <AppNavigator fontsLoaded={loaded || !!error} />;

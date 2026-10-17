@@ -44,7 +44,7 @@ export default function DrawerNavigator() {
       <Drawer.Navigator
         drawerContent={CustomDrawerContent}
         initialRouteName="Home"
-        defaultStatus="open"
+        defaultStatus="closed"
         screenOptions={{
           headerShown: false,
           drawerActiveBackgroundColor: '#3498db',

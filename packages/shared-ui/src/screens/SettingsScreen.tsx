@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, Image } from 'react-native';
+import { StyleSheet, View, Text, Image, Platform, Pressable } from 'react-native';
 import {
   SpatialNavigationRoot,
   SpatialNavigationNode,
@@ -10,7 +10,7 @@ import { Direction } from '@bam.tech/lrud';
 import { scaledPixels } from '../hooks/useScale';
 import { colors, safeZones } from '../theme';
 import FocusablePressable from '../components/FocusablePressable';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useMenuContext } from '../components/MenuContext';
 import { getOpenDrawerDirection } from '../utils/rtl';
 
@@ -23,6 +23,20 @@ export default function SettingsScreen() {
   const [autoplay, setAutoplay] = useState(true);
 
   const qualityOptions = ['Auto', '1080p', '720p', '480p'];
+
+  // Web keyboard: Escape or Backspace goes back to Home
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' || e.key === 'Backspace') {
+          // @ts-ignore
+          navigation.jumpTo?.('Home');
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [navigation]);
 
   const onDirectionHandledWithoutMovement = useCallback(
     (movement: Direction) => {
@@ -41,8 +55,54 @@ export default function SettingsScreen() {
     >
       <View style={styles.container}>
         <View style={styles.innerContainer}>
-          <Text style={styles.title}>Settings</Text>
-          <SpatialNavigationScrollView style={styles.scrollView}>
+          {/* Top Bar with Menu and Back to Home */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable
+                onPress={() => {
+                  navigation.dispatch(DrawerActions.openDrawer());
+                  toggleMenu(true);
+                }}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                  borderColor: 'rgba(255, 255, 255, 0.25)',
+                  borderWidth: 1,
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>☰ Menu</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  // @ts-ignore
+                  navigation.jumpTo?.('Home');
+                }}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                  borderColor: 'rgba(255, 255, 255, 0.25)',
+                  borderWidth: 1,
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>← Back to Home</Text>
+              </Pressable>
+            </View>
+
+            <Text style={{ color: '#FF9900', fontWeight: '800', fontSize: 18 }}>
+              F.TV · Settings
+            </Text>
+          </View>
+
+          <Text style={styles.title}>Device & App Settings</Text>
+          <SpatialNavigationScrollView
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={true}
+          >
             <View style={styles.scrollContent}>
               {/* Video Quality Section */}
               <View style={styles.section}>

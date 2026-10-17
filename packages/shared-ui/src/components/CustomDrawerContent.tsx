@@ -1,6 +1,6 @@
 import { scaledPixels } from '../hooks/useScale';
 import { DrawerContentComponentProps, DrawerContentScrollView } from '@react-navigation/drawer';
-import { View, StyleSheet, Image, Platform, Text } from 'react-native';
+import { View, StyleSheet, Image, Platform, Text, Pressable } from 'react-native';
 import { DefaultFocus, SpatialNavigationFocusableView, SpatialNavigationRoot } from 'react-tv-space-navigation';
 import { DrawerParamList } from '../navigation/types';
 import { useMenuContext } from '../components/MenuContext';
@@ -14,9 +14,9 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   const { isOpen: isMenuOpen, toggleMenu } = useMenuContext();
   const styles = drawerStyles;
   const drawerItems = [
-    { name: 'Home', label: 'Home' },
-    { name: 'Explore', label: 'Explore' },
-    { name: 'TV', label: 'TV' },
+    { name: 'Home', label: '🏠 Home & Browse' },
+    { name: 'Explore', label: '✨ ViewAI Showcase' },
+    { name: 'TV', label: '📺 Live TV Guide' },
   ] as const;
 
   const onDirectionHandledWithoutMovement = useCallback(
@@ -28,6 +28,17 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
     },
     [navigation, toggleMenu],
   );
+
+  const handleSelect = (name: keyof DrawerParamList) => {
+    navigation.jumpTo(name);
+    navigation.closeDrawer();
+    toggleMenu(false);
+  };
+
+  const closeDrawer = () => {
+    navigation.closeDrawer();
+    toggleMenu(false);
+  };
 
   return (
     <SpatialNavigationRoot isActive={isMenuOpen} onDirectionHandledWithoutMovement={onDirectionHandledWithoutMovement}>
@@ -42,41 +53,43 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
             ...(Platform.OS === 'ios' && Platform.isTV && { paddingStart: 0, paddingEnd: 0, paddingTop: 0 }),
           }}
         >
+          {/* Header with profile and close button */}
           <View style={styles.header}>
-            <Image source={require('../assets/images/logo.png')} style={styles.profilePic} />
-            <Text style={styles.userName}>Pioneer Tom</Text>
-            <Text style={styles.switchAccount}>Switch account</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <Image source={require('../assets/images/logo.png')} style={styles.profilePic} />
+              <Pressable onPress={closeDrawer} style={{ padding: 8 }}>
+                <Text style={{ color: '#94A3B8', fontSize: 18, fontWeight: '700' }}>✕</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.userName}>Fire TV User</Text>
+            <Text style={styles.switchAccount}>ViewAI Active</Text>
           </View>
           {drawerItems.map((item, index) =>
             index === 0 ? (
               <DefaultFocus key={index}>
-                <SpatialNavigationFocusableView
-                  onSelect={() => {
-                    navigation.jumpTo(item.name as keyof DrawerParamList);
-                    navigation.closeDrawer();
-                    toggleMenu(false);
-                  }}
-                >
+                <SpatialNavigationFocusableView onSelect={() => handleSelect(item.name as keyof DrawerParamList)}>
                   {({ isFocused }) => (
-                    <View style={[styles.menuItem, isFocused && styles.menuItemFocused]}>
+                    <Pressable
+                      onPress={() => handleSelect(item.name as keyof DrawerParamList)}
+                      style={[styles.menuItem, isFocused && styles.menuItemFocused]}
+                    >
                       <Text style={[styles.menuText, isFocused && styles.menuTextFocused]}>{item.label}</Text>
-                    </View>
+                    </Pressable>
                   )}
                 </SpatialNavigationFocusableView>
               </DefaultFocus>
             ) : (
               <SpatialNavigationFocusableView
                 key={index}
-                onSelect={() => {
-                  navigation.jumpTo(item.name as keyof DrawerParamList);
-                  navigation.closeDrawer();
-                  toggleMenu(false);
-                }}
+                onSelect={() => handleSelect(item.name as keyof DrawerParamList)}
               >
                 {({ isFocused }) => (
-                  <View style={[styles.menuItem, isFocused && styles.menuItemFocused]}>
+                  <Pressable
+                    onPress={() => handleSelect(item.name as keyof DrawerParamList)}
+                    style={[styles.menuItem, isFocused && styles.menuItemFocused]}
+                  >
                     <Text style={[styles.menuText, isFocused && styles.menuTextFocused]}>{item.label}</Text>
-                  </View>
+                  </Pressable>
                 )}
               </SpatialNavigationFocusableView>
             ),
@@ -85,19 +98,16 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
 
         {/* Settings button at bottom */}
         <View style={styles.footer}>
-          <SpatialNavigationFocusableView
-            onSelect={() => {
-              navigation.jumpTo('Settings');
-              navigation.closeDrawer();
-              toggleMenu(false);
-            }}
-          >
+          <SpatialNavigationFocusableView onSelect={() => handleSelect('Settings')}>
             {({ isFocused }) => (
-              <View style={[styles.settingsButton, isFocused && styles.settingsButtonFocused]}>
+              <Pressable
+                onPress={() => handleSelect('Settings')}
+                style={[styles.settingsButton, isFocused && styles.settingsButtonFocused]}
+              >
                 <View style={styles.cogIcon}>
-                  <Text style={[styles.cogIconText, isFocused && styles.cogIconTextFocused]}>⚙</Text>
+                  <Text style={[styles.cogIconText, isFocused && styles.cogIconTextFocused]}>⚙ Settings</Text>
                 </View>
-              </View>
+              </Pressable>
             )}
           </SpatialNavigationFocusableView>
         </View>

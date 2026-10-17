@@ -11,7 +11,7 @@ import React, {
   useCallback,
 } from 'react';
 
-import { View, Platform, StyleSheet } from 'react-native';
+import { View, Platform, StyleSheet, Pressable, Text } from 'react-native';
 
 import {
   SpatialNavigationRoot,
@@ -252,9 +252,25 @@ export default function PlayerScreen() {
     }
   }, [showControls]);
 
-  // Determine if spatial navigation should be active.
-  const spatialNavActive =
-    isFocused && Platform.OS === 'android';
+  // Keyboard navigation on Web: Escape or Backspace goes back
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' || e.key === 'Backspace') {
+          if (activePanel !== 'none') {
+            closePanel();
+          } else {
+            navigation.goBack();
+          }
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [navigation, activePanel, closePanel]);
+
+  // Determine if spatial navigation should be active (on all platforms when focused)
+  const spatialNavActive = isFocused;
 
   // --------------------------------------------------------------------------
   // Render
@@ -263,6 +279,16 @@ export default function PlayerScreen() {
   return (
     <SpatialNavigationRoot isActive={spatialNavActive}>
       <View style={playerStyles.container}>
+        {/* Quick Exit / Back Button on Web / TV */}
+        <View style={playerStyles.topExitBar}>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={playerStyles.exitButton}
+          >
+            <Text style={playerStyles.exitButtonText}>← Exit Player</Text>
+          </Pressable>
+        </View>
+
         {/* Video Player */}
         <View
           style={[
@@ -371,5 +397,27 @@ const playerStyles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'space-between',
     zIndex: 1,
+  },
+
+  topExitBar: {
+    position: 'absolute',
+    top: 24,
+    start: 32,
+    zIndex: 999,
+  },
+
+  exitButton: {
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+
+  exitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { useNavigation } from '@react-navigation/native';
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Platform } from 'react-native';
 import {
   DefaultFocus,
   SpatialNavigationFocusableView,
@@ -16,7 +16,7 @@ import { scaledPixels } from '../hooks/useScale';
 import { useMenuContext } from '../components/MenuContext';
 import { DrawerActions, useIsFocused } from '@react-navigation/native';
 import { Direction } from '@bam.tech/lrud';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { safeZones, colors } from '../theme';
 import { getOpenDrawerDirection } from '../utils/rtl';
 import { Pressable } from 'react-native';
@@ -82,21 +82,65 @@ export default function ExploreScreen() {
   const isActive = isFocused && !isMenuOpen;
   const navigation = useNavigation();
   const [focusedIndex, setFocusedIndex] = useState(0);
-
   const onDirectionHandledWithoutMovement = useCallback(
-    (movement: Direction) => {
-      if (movement === getOpenDrawerDirection() && focusedIndex === 0) {
+    (direction: Direction) => {
+      if (direction === getOpenDrawerDirection()) {
         navigation.dispatch(DrawerActions.openDrawer());
         toggleMenu(true);
       }
     },
-    [toggleMenu, focusedIndex, navigation],
+    [navigation, toggleMenu],
   );
+  // Keyboard navigation on Web: Escape or Backspace goes back to Home
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' || e.key === 'Backspace') {
+          // @ts-ignore
+          navigation.jumpTo?.('Home');
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [navigation]);
 
   return (
     <SpatialNavigationRoot isActive={isActive} onDirectionHandledWithoutMovement={onDirectionHandledWithoutMovement}>
       <View style={exploreStyles.container}>
-        <SpatialNavigationScrollView offsetFromStart={scaledPixels(20)}>
+        {/* Top Header Bar with Menu and Back to Home */}
+        <View style={exploreStyles.topBar}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Pressable
+              onPress={() => {
+                navigation.dispatch(DrawerActions.openDrawer());
+                toggleMenu(true);
+              }}
+              style={exploreStyles.topButton}
+            >
+              <Text style={exploreStyles.topButtonText}>☰ Menu</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                // @ts-ignore
+                navigation.jumpTo?.('Home');
+              }}
+              style={exploreStyles.topButton}
+            >
+              <Text style={exploreStyles.topButtonText}>← Back to Home</Text>
+            </Pressable>
+          </View>
+
+          <Text style={exploreStyles.topBrandText}>
+            F.TV · ViewAI Showcase
+          </Text>
+        </View>
+
+        <SpatialNavigationScrollView
+          offsetFromStart={scaledPixels(20)}
+          showsVerticalScrollIndicator={true}
+        >
           {/* Hero Section */}
           <View style={exploreStyles.heroSection}>
             <Text style={exploreStyles.heroTag}>VIEWAI PLATFORM</Text>
@@ -184,6 +228,31 @@ const exploreStyles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: scaledPixels(safeZones.titleSafe.horizontal),
     paddingTop: scaledPixels(safeZones.titleSafe.vertical),
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: scaledPixels(12),
+    marginBottom: scaledPixels(10),
+  },
+  topButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderWidth: 1,
+    paddingHorizontal: scaledPixels(16),
+    paddingVertical: scaledPixels(8),
+    borderRadius: scaledPixels(8),
+  },
+  topButtonText: {
+    color: '#FFFFFF',
+    fontSize: scaledPixels(16),
+    fontWeight: '700',
+  },
+  topBrandText: {
+    color: '#FF9900',
+    fontSize: scaledPixels(18),
+    fontWeight: '800',
   },
   heroSection: {
     paddingVertical: scaledPixels(40),

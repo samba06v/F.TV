@@ -1,10 +1,9 @@
 import React, { ReactNode } from 'react';
-import { View, ViewStyle, StyleProp } from 'react-native';
+import { View, ViewStyle, StyleProp, Platform } from 'react-native';
 
 /**
- * Simple gradient replacement component
- * Uses the last color in the gradient array as a solid background
- * Does NOT use expo-linear-gradient to avoid platform compatibility issues
+ * Universal linear gradient component
+ * Uses CSS linear-gradient on Web and safe fallback on native/Vega
  */
 
 interface PlatformLinearGradientProps {
@@ -19,12 +18,39 @@ interface PlatformLinearGradientProps {
 const PlatformLinearGradient: React.FC<PlatformLinearGradientProps> = ({
   colors,
   style,
+  start = { x: 0, y: 0 },
+  end = { x: 0, y: 1 },
   children,
 }) => {
-  // Use the last color in the gradient array as the solid background
-  const fallbackColor = colors && colors.length > 0
-    ? colors[colors.length - 1]
-    : 'rgba(0, 0, 0, 0.6)';
+  if (Platform.OS === 'web') {
+    let direction = 'to bottom';
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      direction = dx > 0 ? 'to right' : 'to left';
+    } else {
+      direction = dy > 0 ? 'to bottom' : 'to top';
+    }
+
+    const gradientCss = `linear-gradient(${direction}, ${colors.join(', ')})`;
+
+    return (
+      <View
+        style={[
+          style as any,
+          {
+            // @ts-ignore
+            backgroundImage: gradientCss,
+          },
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
+
+  // Native fallback: use the deepest color for contrast protection
+  const fallbackColor = colors.find((c) => !c.includes('transparent')) || 'rgba(0, 0, 0, 0.75)';
 
   return (
     <View
